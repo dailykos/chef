@@ -37,7 +37,36 @@ class Chef
       end
 
       def action_create
+	assert_enclosing_directory_exists!
+	if file_cache_location && content_stale?
+	  Chef::Log.debug("#{@new_resource} has new encrypted contents")
+	  backup_new_resource
+	  Tempfile.open(::File.basename(@new_resource.name)) do |staging_file|
+	    secret ||= self.load_secret
+	    plain_data = self.cipher(:decrypt, @new_resource.content, secret)
+	    staging_file.write(plain_data)
+	    staging_file.close
+	    staging_file_to_tmpdir(staging_file.path)
+	    FileUtils.mv(staging_file.path, @new_resource.path)
+	  end
+	  Chef::Log.info("#{@new_resource} created file #{@new_resource.path}")
+	  @new_resource.updated_by_last_action(true)
+	else
+	  set_all_access_controls(@new_resource.path)
+	end
+	@new_resource.updated_by_last_action?
+      end
 
+      def content_stale?
+	( ! ::File.exist?(@new_resource.path)) || ( ! compare_content)
+      end
+
+      def new_resource_content_checksum
+        @new_resource.content && Digest::SHA2.hexdigest(self.cipher(:decrypt, @new_resource.content, secret))
+      end
+
+      def compare_content
+	checksum(@current_resource.path) == new_resource_content_checksum
       end
 
       def self.load_secret(path=nil)
