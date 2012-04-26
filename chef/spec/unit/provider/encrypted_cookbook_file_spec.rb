@@ -27,6 +27,12 @@ EXPECTED
 
     @secret = "abc123SECRET"
     @file_content = Chef::Provider::EncryptedCookbookFile.cipher(:encrypt, @plain_content, @secret)
+
+    # stub out load_secret stuff here?
+    # make sure to test all the methods of loading the secret explicitly
+    default_path = "/etc/chef/encrypted_file_secret"
+    ::File.stub(:exists?).with(default_path).and_return(true)
+    IO.stub(:read).with(default_path).and_return(@secret)
   end
 
   # We want this provider to still be able to do the same general tasks as the
