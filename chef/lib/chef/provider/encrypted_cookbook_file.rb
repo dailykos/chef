@@ -43,10 +43,10 @@ class Chef
 	  backup_new_resource
 	  Tempfile.open(::File.basename(@new_resource.name)) do |staging_file|
 	    secret ||= self.load_secret
-	    plain_data = self.cipher(:decrypt, @new_resource.content, secret)
-	    staging_file.write(plain_data)
+	    #plain_data = Chef::Provider::EncryptedCookbookFile.cipher(:decrypt, @new_resource.content, secret)
+	    #staging_file.write(plain_data)
 	    staging_file.close
-	    staging_file_to_tmpdir(staging_file.path)
+	    stage_file_to_tmpdir(staging_file.path)
 	    FileUtils.mv(staging_file.path, @new_resource.path)
 	  end
 	  Chef::Log.info("#{@new_resource} created file #{@new_resource.path}")
@@ -69,7 +69,7 @@ class Chef
 	checksum(@current_resource.path) == new_resource_content_checksum
       end
 
-      def self.load_secret(path=nil)
+      def load_secret(path=nil)
 	path = path || Chef::Config[:encrypted_file_secret] || DEFAULT_SECRET_FILE
 	@secret ||= case path
 		 when /^\w+:\/\//
