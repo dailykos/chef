@@ -104,7 +104,7 @@ class Chef
 	  ans
 	end
 
-	def self.decrypt_file(enc_file, plain_file key)
+	def self.decrypt_file(enc_file, plain_file, key)
 	  unless ::File.exists?(enc_file)
 	    raise Errno::ENOENT, "File not found: #{enc_file}"
 	  end
