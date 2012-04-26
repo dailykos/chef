@@ -71,7 +71,7 @@ class Chef
 
       def self.load_secret(path=nil)
 	path = path || Chef::Config[:encrypted_file_secret] || DEFAULT_SECRET_FILE
-	secret = case path
+	@secret ||= case path
 		 when /^\w+:\/\//
 		   # We have a remote key
 		   begin
@@ -87,10 +87,10 @@ class Chef
 		   end
 		   IO.read(path).strip
 		 end
-	if secret.size < 1
+	if @secret.size < 1
 	  raise ArgumentError, "invalid zero length secret in '#{path}'"
 	end
-	secret
+	@secret
       end
 
       protected

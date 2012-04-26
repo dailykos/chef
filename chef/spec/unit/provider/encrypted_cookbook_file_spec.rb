@@ -111,7 +111,7 @@ EXPECTED
         @provider.stage_file_to_tmpdir(staging.path)
         actual = IO.read(staging.path)
       end
-      actual.should == @file_content
+      actual.should == @plain_content
     end
 
     it "installs the file from the cookbook cache" do
