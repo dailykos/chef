@@ -51,6 +51,7 @@ class Chef
 	    ::File.open(staging_file.path, "r+") do |f|
 	      enc_data = f.read
 	      f.rewind
+	      f.truncate
 	      plain_data = Chef::Provider::EncryptedCookbookFile.cipher(:decrypt, enc_data, secret)
 	      f.write(plain_data)
 	    end
