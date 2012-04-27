@@ -89,7 +89,7 @@ EXPECTED
     end
 
     it "looks up a file from the cookbook cache" do
-      expected = CHEF_SPEC_DATA + "/cookbooks/apache2/files/default/apache2_module_conf_generate.pl"
+      expected = CHEF_SPEC_DATA + "/cookbooks/apache2/files/default/apache2_module_conf_generate.pl-enc"
       @provider.file_cache_location.should == expected
     end
 
@@ -111,7 +111,7 @@ EXPECTED
         @provider.stage_file_to_tmpdir(staging.path)
         actual = IO.read(staging.path)
       end
-      actual.should == @plain_content
+      actual.should == @file_content
     end
 
     it "installs the file from the cookbook cache" do
