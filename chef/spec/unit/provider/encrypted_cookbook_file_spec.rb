@@ -16,7 +16,7 @@ describe Chef::Provider::EncryptedCookbookFile do
     @cookbook_collection = Chef::CookbookCollection.new(Chef::CookbookLoader.new(@cookbook_repo))
     @run_context = Chef::RunContext.new(@node, @cookbook_collection)
 
-    @new_resource = Chef::Resource::EncryptedCookbookFile.new('apache2_module_conf_generate.pl')
+    @new_resource = Chef::Resource::EncryptedCookbookFile.new('apache2_module_conf_generate.pl-enc')
     @new_resource.cookbook_name = 'apache2'
     @provider = Chef::Provider::EncryptedCookbookFile.new(@new_resource, @run_context)
 
