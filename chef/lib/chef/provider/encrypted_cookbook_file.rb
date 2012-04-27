@@ -47,6 +47,13 @@ class Chef
 	    #staging_file.write(plain_data)
 	    staging_file.close
 	    stage_file_to_tmpdir(staging_file.path)
+	    # decrypt here?
+	    ::File.open(staging_file.path, "r+") do |f|
+	      enc_data = f.read
+	      f.rewind
+	      plain_data = Chef::Provider::EncryptedCookbookFile.cipher(:decrypt, enc_data, secret)
+	      f.write(plain_data)
+	    end
 	    FileUtils.mv(staging_file.path, @new_resource.path)
 	  end
 	  Chef::Log.info("#{@new_resource} created file #{@new_resource.path}")
