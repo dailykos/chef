@@ -143,6 +143,104 @@ EXPECTED
 
   end
 
+  describe "when the file exists but has incorrect content" do
+    before do
+      @tempfile = Tempfile.open('cookbook_file_spec')
+      @new_resource.path(@target_file = @tempfile.path)
+      @tempfile.puts "the wrong content"
+      @tempfile.close
+      @current_resource = @new_resource.dup
+      @provider.current_resource = @current_resource
+    end
+
+    it "overwrites it when the create action is called" do
+      @provider.should_receive(:set_all_access_controls)
+      @provider.should_receive(:backup_new_resource)
+      @provider.action_create
+      actual = IO.read(@target_file)
+      actual.should == @file_content
+    end
+
+    it "marks the resource as updated by the last action" do
+      @provider.should_receive(:set_all_access_controls)
+      @provider.should_receive(:backup_new_resource)
+      @provider.action_create
+      @new_resource.should be_updated
+      @new_resource.should be_updated_by_last_action
+    end
+
+    it "doesn't overwrite when the create if missing action is called" do
+      @provider.should_not_receive(:set_all_access_controls)
+      @provider.action_create_if_missing
+      actual = IO.read(@target_file)
+      actual.should == "the wrong content\n"
+    end
+
+    it "doesn't mark the resource as updated by the action for create_if_missing" do
+      @provider.action_create_if_missing
+      @new_resource.should_not be_updated
+      @new_resource.should_not be_updated_by_last_action
+    end
+
+    after { @tempfile && @tempfile.close! }
+  end
+
+  describe "when the file has the correct content" do
+    before do
+      Chef::FileAccessControl.any_instance.stub(:modified?).and_return(false)
+      @tempfile = Tempfile.open('cookbook_file_spec')
+      @new_resource.path(@target_file = @tempfile.path)
+      @tempfile.write(@file_content)
+      @tempfile.close
+      @current_resource = @new_resource.dup
+      @provider.current_resource = @current_resource
+    end
+
+    after { @tempfile && @tempfile.unlink}
+
+    it "it checks access control but does not alter content when action is create" do
+      @provider.load_current_resource
+      @provider.should_receive(:set_all_access_controls)
+      @provider.should_not_receive(:stage_file_to_tmpdir)
+      @provider.action_create
+    end
+
+    it "does not mark the resource as updated by the last action" do
+      @provider.load_current_resource
+      @provider.action_create
+      @new_resource.should_not be_updated
+      @new_resource.should_not be_updated_by_last_action
+    end
+
+    it "does not alter content or access control when action is create if missing" do
+      @provider.load_current_resource
+      @provider.should_not_receive(:set_all_access_controls)
+      @provider.should_not_receive(:stage_file_to_tmpdir)
+      @provider.action_create_if_missing
+    end
+
+    describe "but the access controls are incorrect" do
+      before do
+        @access_controls = mock("Chef::FileAccessControl", :modified? => true)
+        Chef::FileAccessControl.stub!(:new).and_return(@access_controls)
+      end
+
+      it "updates the access controls" do
+        @access_controls.should_receive(:set_all)
+        @provider.set_all_access_controls("/foo")
+      end
+
+      it "marks the resource as updated by the last action run" do
+        @access_controls.stub!(:set_all)
+
+        @provider.set_all_access_controls("/foo")
+        @new_resource.should be_updated_by_last_action
+        @new_resource.should be_updated
+      end
+
+    end
+
+  end
 
 
 
