@@ -120,7 +120,7 @@ EXPECTED
       @provider.should_receive(:set_all_access_controls)
       @provider.action_create
       actual = IO.read(@install_to)
-      actual.should == @file_content
+      actual.should == @plain_content
     end
 
     it "installs the file for create_if_missing" do
@@ -129,7 +129,7 @@ EXPECTED
       @provider.should_receive(:backup_new_resource)
       @provider.action_create_if_missing
       actual = IO.read(@install_to)
-      actual.should == @file_content
+      actual.should == @plain_content
     end
 
     it "marks the resource as updated by the last action" do
@@ -158,7 +158,7 @@ EXPECTED
       @provider.should_receive(:backup_new_resource)
       @provider.action_create
       actual = IO.read(@target_file)
-      actual.should == @file_content
+      actual.should == @plain_content
     end
 
     it "marks the resource as updated by the last action" do
