@@ -27,7 +27,6 @@ class Chef
   class Provider
     class EncryptedCookbookFile < Chef::Provider::CookbookFile
       DEFAULT_SECRET_FILE = "/etc/chef/encrypted_file_secret"
-      ALGORITHM = 'aes-256-cbc'
 
       def load_current_resource
         @current_resource = Chef::Resource::EncryptedCookbookFile.new(@new_resource.name)
