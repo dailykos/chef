@@ -47,7 +47,6 @@ require 'chef/encryption'
 #
 class Chef::EncryptedDataBagItem
   DEFAULT_SECRET_FILE = "/etc/chef/encrypted_data_bag_secret"
-  ALGORITHM = 'aes-256-cbc'
 
   def initialize(enc_hash, secret)
     @enc_hash = enc_hash

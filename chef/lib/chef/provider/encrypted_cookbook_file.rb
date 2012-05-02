@@ -43,8 +43,6 @@ class Chef
 	  backup_new_resource
 	  Tempfile.open(::File.basename(@new_resource.name)) do |staging_file|
 	    secret ||= self.load_secret
-	    #plain_data = Chef::Provider::EncryptedCookbookFile.cipher(:decrypt, @new_resource.content, secret)
-	    #staging_file.write(plain_data)
 	    staging_file.close
 	    stage_file_to_tmpdir(staging_file.path)
 	    # decrypt here?
@@ -52,7 +50,7 @@ class Chef
 	      enc_data = f.read
 	      f.rewind
 	      f.truncate(f.pos)
-	      plain_data = Chef::Provider::EncryptedCookbookFile.cipher(:decrypt, enc_data, secret)
+	      plain_data = Chef::Encryption.cipher(:decrypt, enc_data, secret)
 	      f.write(plain_data)
 	    end
 	    FileUtils.mv(staging_file.path, @new_resource.path)
@@ -70,7 +68,7 @@ class Chef
       end
 
       def new_resource_content_checksum
-        @new_resource.content && Digest::SHA2.hexdigest(self.cipher(:decrypt, @new_resource.content, secret))
+        @new_resource.content && Digest::SHA2.hexdigest(Chef::Encryption.cipher(:decrypt, @new_resource.content, secret))
       end
 
       def compare_content
@@ -79,58 +77,9 @@ class Chef
 
       def load_secret(path=nil)
 	path = path || Chef::Config[:encrypted_file_secret] || DEFAULT_SECRET_FILE
-	@secret ||= case path
-		 when /^\w+:\/\//
-		   # We have a remote key
-		   begin
-		     Kernel.open(path).read.strip
-		   rescue Errno::ECONNREFUSED
-		     raise ArgumentError, "Remote key not available from '#{path}'"
-		   rescue OpenURI::HTTPError
-		     raise ArgumentError, "Remote key not found at '#{path}'"
-		   end
-		 else
-		   if !::File.exists?(path)
-		     raise Errno::ENOENT, "file not found '#{path}'"
-		   end
-		   IO.read(path).strip
-		 end
-	if @secret.size < 1
-	  raise ArgumentError, "invalid zero length secret in '#{path}'"
-	end
+	@secret ||= Chef::Encryption.load_secret(path)
 	@secret
       end
-
-      protected
-
-	def self.cipher(direction, data, key)
-	  cipher = OpenSSL::Cipher::Cipher.new(ALGORITHM)
-	  cipher.send(direction)
-	  cipher.pkcs5_keyivgen(key)
-	  ans = cipher.update(data)
-	  ans << cipher.final
-	  ans
-	end
-
-	def self.decrypt_file(enc_file, plain_file, key)
-	  unless ::File.exists?(enc_file)
-	    raise Errno::ENOENT, "File not found: #{enc_file}"
-	  end
-	  fh = ::File.open(enc_file, "r+b")
-	  enc_data = fh.read
-	  plain_data = self.cipher(:decrypt, enc_data, key)
-	  ::File.open(plain_file, "wb"){ |f| f.write(plain_data) }
-	end
-
-	def self.encrypt_file(plain_file, enc_file, key)
-	  unless ::File.exists?(plain_file)
-	    raise Errno::ENOENT, "File not found: #{plain_file}"
-	  end
-	  fh = ::File.open(plain_file, "rb")
-	  plain_data = fh.read
-	  enc_data = self.cipher(:encrypt, plain_data, key)
-	  ::File.open(enc_file, "wb"){ |f| f.write(enc_data) }
-	end
 
     end
   end
