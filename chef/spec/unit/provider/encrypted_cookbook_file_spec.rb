@@ -4,6 +4,7 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'ostruct'
+require 'chef/encryption'
 
 describe Chef::Provider::EncryptedCookbookFile do
   before do
@@ -26,7 +27,7 @@ describe Chef::Provider::EncryptedCookbookFile do
 EXPECTED
 
     @secret = "abc123SECRET"
-    @file_content = Chef::Provider::EncryptedCookbookFile.cipher(:encrypt, @plain_content, @secret)
+    @file_content = Chef::Encryption.cipher(:encrypt, @plain_content, @secret)
 
     # stub out load_secret stuff here?
     # make sure to test all the methods of loading the secret explicitly
