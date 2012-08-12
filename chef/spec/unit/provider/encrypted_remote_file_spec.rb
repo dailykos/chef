@@ -20,10 +20,15 @@
 
 require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "spec_helper"))
 
+# TODO: make encrypted remote file for tests
+#	get checksum for said file
+
 describe Chef::Provider::EncryptedRemoteFile, "action_create" do
+  ENC_CHECKSUM = ""
+  ENC_CHECKSUM_PARTIAL = ""
   before(:each) do
     @resource = Chef::Resource::EncryptedRemoteFile.new("seattle")
-    @resource.path(File.expand_path(File.join(CHEF_SPEC_DATA, "seattle.txt")))
+    @resource.path(File.expand_path(File.join(CHEF_SPEC_DATA, "seattle-enc.txt")))
     @resource.source("http://foo")
     @node = Chef::Node.new
     @node.name "latte"
@@ -33,8 +38,8 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
   describe "when checking if the file is at the target version" do
     it "considers the current file to be at the target version if it exists and matches the user-provided checksum" do
       @provider.current_resource = @resource.dup
-      @resource.checksum("0fd012fdc96e96f8f7cf2046522a54aed0ce470224513e45da6bc1a17a4924aa")
-      @provider.current_resource.checksum("0fd012fdc96e96f8f7cf2046522a54aed0ce470224513e45da6bc1a17a4924aa")
+      @resource.checksum(ENC_CHECKSUM)
+      @provider.current_resource.checksum(ENC_CHECKSUM)
       @provider.current_resource_matches_target_checksum?.should be_true
     end
   end
@@ -49,9 +54,9 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
 
       @resource.cookbook_name = "monkey"
 
-      @provider.stub!(:checksum).and_return("0fd012fdc96e96f8f7cf2046522a54aed0ce470224513e45da6bc1a17a4924aa")
+      @provider.stub!(:checksum).and_return(ENC_CHECKSUM)
       @provider.current_resource = @resource.clone
-      @provider.current_resource.checksum("0fd012fdc96e96f8f7cf2046522a54aed0ce470224513e45da6bc1a17a4924aa")
+      @provider.current_resource.checksum(ENC_CHECKSUM)
       File.stub!(:exists?).and_return(true)
       FileUtils.stub!(:cp).and_return(true)
       Chef::Platform.stub!(:find_platform_and_version).and_return([ :mac_os_x, "10.5.1" ])
@@ -62,7 +67,7 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
     end
 
     before do
-      @resource.source("http://opscode.com/seattle.txt")
+      @resource.source("http://opscode.com/seattle-enc.txt")
     end
 
     describe "and the target location's enclosing directory does not exist" do
@@ -79,11 +84,11 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
 
       describe "and the existing file matches the checksum exactly" do
         before do
-          @resource.checksum("0fd012fdc96e96f8f7cf2046522a54aed0ce470224513e45da6bc1a17a4924aa")
+          @resource.checksum(ENC_CHECKSUM)
         end
 
         it "does not download the file" do
-          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle.txt").and_return(@tempfile)
+          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
           @provider.action_create
         end
 
@@ -96,11 +101,11 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
 
       describe "and the existing file matches the given partial checksum" do
         before do
-          @resource.checksum("0fd012fd")
+          @resource.checksum(ENC_CHECKSUM_PARTIAL)
         end
 
         it "should not download the file if the checksum is a partial match from the beginning" do
-          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle.txt").and_return(@tempfile)
+          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
           @provider.action_create
         end
 
@@ -114,14 +119,14 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
       describe "and the existing file doesn't match the given checksum" do
         it "downloads the file" do
           @resource.checksum("this hash doesn't match")
-          @rest.should_receive(:fetch).with("http://opscode.com/seattle.txt").and_return(@tempfile)
+          @rest.should_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
           @provider.action_create
         end
 
         it "does not consider the checksum a match if the matching string is offset" do
-          # i.e., the existing file is      "0fd012fdc96e96f8f7cf2046522a54aed0ce470224513e45da6bc1a17a4924aa"
+          # i.e., the existing file is      ENC_CHECKSUM
           @resource.checksum("fd012fd")
-          @rest.should_receive(:fetch).with("http://opscode.com/seattle.txt").and_return(@tempfile)
+          @rest.should_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
           @provider.action_create
         end
       end
@@ -151,7 +156,7 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
     end
 
     it "should checksum the raw file" do
-      @provider.should_receive(:checksum).with(@tempfile.path).and_return("0fd012fdc96e96f8f7cf2046522a54aed0ce470224513e45da6bc1a17a4924aa")
+      @provider.should_receive(:checksum).with(@tempfile.path).and_return(ENC_CHECKSUM)
       @provider.action_create
     end
 

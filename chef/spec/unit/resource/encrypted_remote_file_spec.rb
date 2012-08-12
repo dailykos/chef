@@ -58,7 +58,7 @@ describe Chef::Resource::EncryptedRemoteFile do
     end
 
     it "should use only the basename of the file as the default" do
-      r = Chef::Resource::RemoteFile.new("/tmp/obit/fakey_fakerton")
+      r = Chef::Resource::EncryptedRemoteFile.new("/tmp/obit/fakey_fakerton")
       r.source.should eql("fakey_fakerton")
     end
   end
