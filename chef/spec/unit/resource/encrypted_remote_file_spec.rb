@@ -38,7 +38,7 @@ describe Chef::Resource::EncryptedRemoteFile do
   it "says its provider is EncryptedRemoteFile when the source is an absolute URI" do
     @resource.source("http://www.google.com/robots.txt")
     @resource.provider.should == Chef::Provider::EncryptedRemoteFile
-    Chef::Platform.find_provider(:noplatform, 'noversion', @resource).should == Chef::Provider::RemoteFile
+    Chef::Platform.find_provider(:noplatform, 'noversion', @resource).should == Chef::Provider::EncryptedRemoteFile
   end
 
   it "says its provider is EncryptedCookbookFile when the source is a relative URI" do
