@@ -24,11 +24,12 @@ require File.expand_path(File.join(File.dirname(__FILE__), "..", "..", "spec_hel
 #	get checksum for said file
 
 describe Chef::Provider::EncryptedRemoteFile, "action_create" do
-  ENC_CHECKSUM = ""
-  ENC_CHECKSUM_PARTIAL = ""
+  ENC_CHECKSUM = "b28e1a65b524a3c524c95a484079dd29"
+  ENC_CHECKSUM_PARTIAL = "b28e1a65b5"
+  ENC_SECRET = "abc123SECRET"
   before(:each) do
     @resource = Chef::Resource::EncryptedRemoteFile.new("seattle")
-    @resource.path(File.expand_path(File.join(CHEF_SPEC_DATA, "seattle-enc.txt")))
+    @resource.path(File.expand_path(File.join(CHEF_SPEC_DATA, "seattle.txt.enc")))
     @resource.source("http://foo")
     @node = Chef::Node.new
     @node.name "latte"
@@ -67,7 +68,7 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
     end
 
     before do
-      @resource.source("http://opscode.com/seattle-enc.txt")
+      @resource.source("http://opscode.com/seattle.txt.enc")
     end
 
     describe "and the target location's enclosing directory does not exist" do
@@ -88,7 +89,7 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
         end
 
         it "does not download the file" do
-          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
+          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle.txt.enc").and_return(@tempfile)
           @provider.action_create
         end
 
@@ -105,7 +106,7 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
         end
 
         it "should not download the file if the checksum is a partial match from the beginning" do
-          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
+          @rest.should_not_receive(:fetch).with("http://opscode.com/seattle.txt.enc").and_return(@tempfile)
           @provider.action_create
         end
 
@@ -119,14 +120,14 @@ describe Chef::Provider::EncryptedRemoteFile, "action_create" do
       describe "and the existing file doesn't match the given checksum" do
         it "downloads the file" do
           @resource.checksum("this hash doesn't match")
-          @rest.should_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
+          @rest.should_receive(:fetch).with("http://opscode.com/seattle.txt.enc").and_return(@tempfile)
           @provider.action_create
         end
 
         it "does not consider the checksum a match if the matching string is offset" do
           # i.e., the existing file is      ENC_CHECKSUM
           @resource.checksum("fd012fd")
-          @rest.should_receive(:fetch).with("http://opscode.com/seattle-enc.txt").and_return(@tempfile)
+          @rest.should_receive(:fetch).with("http://opscode.com/seattle.txt.enc").and_return(@tempfile)
           @provider.action_create
         end
       end
